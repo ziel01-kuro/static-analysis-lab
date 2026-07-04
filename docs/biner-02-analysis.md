@@ -33,9 +33,11 @@ if (iVar1 == 0) {
 ```
 
 ## 5. Lampiran Bukti Analisis (Anotasi)
-Hasil analisis statis bisa dilihat pada folder **images**.
+Hasil analisis statis bisa dilihat pada folder **images/biner-02-images**.
 
-!hasil analisis metadata: (biner02-01-metadata,png)
-!hasil analisis strings: (biner02-02-strings.png)
-!hasil analisis imports: (biner02-03-imports.png) & (biner02-04-imports)
-!hasil analisis main decompiler: (biner02-05-decompile)
+* Hasil analisis metadata: (biner02-01-metadata,png)
+* Hasil analisis strings: (biner02-02-strings.webp)
+* Hasil analisis imports: (biner02-03-imports.png) & (biner02-04-imports.png)
+* Hasil analisis main decompiler: (biner02-05-decompile.png)
+
+

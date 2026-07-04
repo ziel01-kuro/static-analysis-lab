@@ -1,27 +1,66 @@
 # Laporan Analisis Statis - Biner 01 (Minesweeper)
 
-- **Nama File:** winmine.exe (Minesweeper)
-- **Tanggal Analisis:** 4 Juli 2026
+- **Nama Berkas:** winmine.exe
+- **Tanggal Analisis:** 5 Juli 2026
+- **Format Berkas:** PE32 (Portable Executable 32-bit)
 
-## 1. Triage Awal & Karakteristik Berkas
-Analisis awal dilakukan tanpa mengeksekusi biner secara langsung menggunakan tools Detect It Easy (DIE) untuk mengidentifikasi identitas dasar file:
-* **Cryptographic Hash (SHA-256):** `00b11dd207cf743fd5c72dea2198194101453ffbd7f085c92715d067b64b9d3a` *(Catatan: Ganti dengan hash asli file Anda jika ada)*
-* **File Type & Architecture:** Portable Executable (PE32), 32-bit Intel x86
-* **Compiler/Linker:** Microsoft Visual C/C++ (MDC)
+## 1. Identifikasi & Metadata Kriptografis
+Karakteristik fisik dan sidik jari biner diekstrak menggunakan ringkasan statis Ghidra CodeBrowser:
+* **SHA-256 Hash:** [Nilai Hash SHA-256 Berkas]
+* **MD5 Hash:** [Nilai Hash MD5 Berkas]
+* **Compiler Target:** Microsoft Visual Studio 2012 (v110) (Platform Windows)
+* **Arsitektur:** x86 (32-bit Little Endian)
 
-## 2. Strings Mencurigakan (Suspicious Strings)
-Berdasarkan hasil ekstraksi teks asli menggunakan fitur String Search pada Ghidra dengan filter "time", ditemukan beberapa literal teks krusial yang merefleksikan logika biner:
-* `u"You have the fastest time\rfor begin..."` / `intermediate` / `expert`: String Unicode yang berfungsi sebagai notasi/pesan selamat saat pemain memecahkan rekor waktu di masing-masing tingkat kesulitan.
-* `"SetTimer"` & `"KillTimer"`: String ASCII yang mereferensikan fungsi API Windows untuk memanipulasi jalannya internal timer (1 detik).
-* `u"Unable to allocate a timer.  Please exit some of your applications and try again."`: String penanganan galat (error handling) jika sistem operasi gagal mengalokasikan resource timer untuk game ini.
-* `u"&Reset Scores"` (Address: `0101e756`): String Unicode yang digunakan pada menu antarmuka untuk memicu fungsi penghapusan data skor terbaik. Karakter `&` menandakan tombol pintas Alt+R pada Windows OS. Keberadaan string ini memperkuat indikasi bahwa biner berinteraksi aktif dengan Windows Registry untuk manajemen penyimpanan data eksternal.
+## 2. Ekstraksi String & Indikator Kontekstual
+Melalui visualisasi teks statis internal, biner ini memuat beberapa instruksi string literal yang menentukan alur eksekusi program:
+* `Minesweeper` (Nama jendela utama aplikasi)
+* `SetTimer` & `KillTimer` (Referensi tekstual terhadap fungsi kontrol waktu internal)
 
-## 3. Import Table Analysis
-Biner ini mengimpor beberapa pustaka dinamis (DLL) inti Windows. Berikut adalah fungsi krusial yang digunakan untuk memetakan kapabilitas program:
-* **`USER32.dll` -> `SetTimer`, `KillTimer`:** Fungsi vital yang digunakan aplikasi untuk memicu interupsi waktu setiap 1 detik, yang menjadi target modifikasi alur kontrol.
-* **`GDI32.dll` -> `BitBlt`, `CreateCompatibleDC`, `SelectObject`**: Fungsi `BitBlt` digunakan untuk menyalin blok grafis (sprites) elemen permainan secara cepat dan efisien dengan rasio 1:1 ke layar.
-* **`ADVAPI32.dll`:** Digunakan untuk berinteraksi dengan hak akses sistem dan registri.
+## 3. Analisis Tabel Impor (Import Table)
+Berdasarkan struktur PE yang diekstrak pada lingkungan analisis statis menggunakan Ghidra, program memanggil fungsi eksternal dari DLL (Dynamic-Link Library) utama:
+* **`USER32.DLL`**: Mengendalikan elemen antarmuka grafis (GUI), penanganan jendela (*windowing*), penangkapan input klik, serta memuat fungsi API krusial `SetTimer` dan `KillTimer`.
+* **`KERNEL32.DLL`**: Bertanggung jawab atas interaksi tingkat rendah dengan subsistem operasi Windows, termasuk manajemen memori dasar dan kontrol daur hidup proses eksekusi biner.
+* **`GDI32.DLL`**: Berperan dalam merender komponen grafis visual pada papan permainan, termasuk warna kotak penutup, angka indikator kedekatan, dan ikon komponen ranjau.
+* **`MSVCRT.DLL`**: Menyediakan fungsi runtime standar bahasa C untuk menangani operasi komputasi matematika internal di dalam program.
 
-## 4. Kesimpulan Awal
-Berdasarkan indikator analisis statis di atas, biner ini merupakan aplikasi game native Windows (Minesweeper) yang bergantung pada fungsi pewaktuan standar OS (`SetTimer`) untuk menjalankan logika permainannya. Program ini tidak menunjukkan indikasi aktivitas malware aktif (seperti koneksi jaringan tersembunyi atau injeksi proses), sehingga aman untuk dianalisis lebih lanjut di lingkungan terisolasi.
+## 4. Alur Logika Dekompilasi & Kesimpulan
+Struktur fungsi `FUN_0100384f` yang didekompilasi oleh Ghidra memperlihatkan logika if-else tanpa adanya *obfuscation*:
+```c
+void __cdecl FUN_0100384f(UINT_PTR param_1, UINT param_2, TIMERPROC param_3)
+{
+  UINT_PTR uVar1;
+  byte unaff_BL;
+  HWND unaff_retaddr;
 
+  uVar1 = SetTimer(unaff_retaddr, param_1, param_2, param_3);
+  if (uVar1 == 0) {
+    FUN_01003950(4);
+  }
+  
+  if ((DAT_01005000 & unaff_BL) == 0) {
+    DAT_0100511c = -2;
+    DAT_01005118 = -2;
+  }
+  
+  if (DAT_01005144 == 0) {
+    if (((~(DAT_01005340)[DAT_01005118 + DAT_0100511c * 0x20] & 0x40) == 0) && 
+       (((&DAT_01005340)[DAT_01005118 + DAT_0100511c * 0x20] & 0x1f) != 0xe)) {
+       FUN_01003512(DAT_01005118, DAT_0100511c);
+    }
+  }
+  else {
+    FUN_010035b7(DAT_01005118, DAT_0100511c);
+  }
+  FUN_01002913(DAT_01005160);
+  return;
+}
+```
+
+## 5. Lampiran Bukti Analisis (Anotasi)
+Hasil analisis statis bisa dilihat pada folder **images/biner-01-images**.
+
+* Hasil analisis metadata: (biner01-01-metadata.png)
+* Hasil analisis imports: (biner01-02-imports-overview.png)
+* Hasil analisis imports SetTimer: (biner01-03-imports-settimer.png)
+* Hasil analisis logic SetTimer: (biner01-04-logic-settimer.png)
+* Hasil analisis logic KillTimer: (biner01-05-logic-killtimer.png) & (biner01-06-logic-killtimer.png)
