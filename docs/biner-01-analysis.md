@@ -6,18 +6,18 @@
 
 ## 1. Identifikasi & Metadata Kriptografis
 Karakteristik fisik dan sidik jari biner diekstrak menggunakan ringkasan statis Ghidra CodeBrowser:
-* **SHA-256 Hash:** [Nilai Hash SHA-256 Berkas]
-* **MD5 Hash:** [Nilai Hash MD5 Berkas]
+* **SHA-256 Hash:** bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41
+* **MD5 Hash:** 9c45d38b74634c9ded60bec640c5c3ca
 * **Compiler Target:** Microsoft Visual Studio 2012 (v110) (Platform Windows)
 * **Arsitektur:** x86 (32-bit Little Endian)
 
 ## 2. Ekstraksi String & Indikator Kontekstual
 Melalui visualisasi teks statis internal, biner ini memuat beberapa instruksi string literal yang menentukan alur eksekusi program:
-* `Minesweeper` (Nama jendela utama aplikasi)
+* `Minesweeper` (Nama aplikasi)
 * `SetTimer` & `KillTimer` (Referensi tekstual terhadap fungsi kontrol waktu internal)
 
 ## 3. Analisis Tabel Impor (Import Table)
-Berdasarkan struktur PE yang diekstrak pada lingkungan analisis statis menggunakan Ghidra, program memanggil fungsi eksternal dari DLL (Dynamic-Link Library) utama:
+Berdasarkan struktur PE yang diekstrak menggunakan Ghidra, program memanggil fungsi eksternal dari DLL (Dynamic-Link Library) utama:
 * **`USER32.DLL`**: Mengendalikan elemen antarmuka grafis (GUI), penanganan jendela (*windowing*), penangkapan input klik, serta memuat fungsi API krusial `SetTimer` dan `KillTimer`.
 * **`KERNEL32.DLL`**: Bertanggung jawab atas interaksi tingkat rendah dengan subsistem operasi Windows, termasuk manajemen memori dasar dan kontrol daur hidup proses eksekusi biner.
 * **`GDI32.DLL`**: Berperan dalam merender komponen grafis visual pada papan permainan, termasuk warna kotak penutup, angka indikator kedekatan, dan ikon komponen ranjau.
