@@ -30,6 +30,7 @@ iVar1 = strcmp(local_48, "secret");
 if (iVar1 == 0) {
     printf("Access granted!\n");
 }
+```
 
 ## 5. Lampiran Bukti Analisis (Anotasi)
 Hasil analisis statis bisa dilihat pada folder **images**.
